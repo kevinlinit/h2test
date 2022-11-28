@@ -2,18 +2,29 @@ package com.h2test.demo.service;
 
 import com.h2test.demo.mapper.GoodsMapper;
 import com.h2test.demo.pojo.Goods;
-import com.h2test.demo.service.GoodsService;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
+import org.springframework.beans.BeanUtils;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
-import java.util.concurrent.TimeUnit;
+import java.util.Map;
 
 @Service
 public class GoodsService {
     @Resource
     private GoodsMapper goodsMapper;
+
+    @Resource(name = "h2Template")
+    private JdbcTemplate h2Template;
+
+    public Goods getH2GoodsById(Long goodsId) {
+        Map<String, Object> map = h2Template.queryForMap("select * from goods");
+//        Goods goodsOne = goodsMapper.selectOneGoods(goodsId);
+        System.out.println(map);
+        Goods goods = new Goods();
+        BeanUtils.copyProperties(map,goods);
+        return goods;
+    }
 
     //得到一件商品的信息
     public Goods getOneGoodsById(Long goodsId) {
@@ -32,5 +43,12 @@ public class GoodsService {
             Long goodsId = goods.getGoodsId();//该对象的自增ID
             return goodsId;
         }
+    }
+
+    public int addH2OneGoods(Goods goods) {
+        String insertSql = "insert into goods(goodsName,subject,price,stock) values (?,?,?,?)";
+        int update = h2Template.update(insertSql, goods.getGoodsName(),goods.getSubject(),goods.getPrice(),goods.getStock());
+        System.out.println("影响条数："+update);
+        return update;
     }
 }
